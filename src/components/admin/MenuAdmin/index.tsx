@@ -33,7 +33,7 @@ export function MenuAdmin() {
     'sm:overflow-visible sm:h-auto',
   );
   const linkClasses = clsx(
-    '[&>svg]:w-[16px] [&>svg]:h-[16px] px-4',
+    '[&>svg]:w-4 [&>svg]:h-4 px-4',
     'flex items-center justify-start gap-2 cursor-pointer',
     'transition hover:bg-slate-800 rounded-lg',
     'h-10',
