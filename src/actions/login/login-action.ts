@@ -1,6 +1,10 @@
 'use server';
 
-import { createLoginSession, verifyPassword } from '@/lib/login/manage-login';
+import {
+  createLoginSession,
+  createLoginSessionFromApi,
+  verifyPassword,
+} from '@/lib/login/manage-login';
 import { LoginSchema } from '@/lib/login/schemas';
 import { apiRequest } from '@/utils/api-request';
 import { asyncDelay } from '@/utils/async-delay';
@@ -62,13 +66,6 @@ export async function loginAction(state: LoginActionState, formData: FormData) {
     };
   }
 
-  console.log(loginResponse.data);
-
-  // await createLoginSession(email);
-  // redirect('/admin/post');
-
-  return {
-    email: formEmail,
-    errors: ['Sucess'],
-  };
+  await createLoginSessionFromApi(loginResponse.data.accessToken);
+  redirect('/admin/post');
 }
