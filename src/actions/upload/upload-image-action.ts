@@ -1,7 +1,7 @@
 'use server';
 
-import { verifyLoginSession } from '@/lib/login/manage-login';
-import { put } from '@vercel/blob';
+import { getLoginSessionForApi } from '@/lib/login/manage-login';
+import { authenticatedApiRequest } from '@/utils/authenticated-api-request';
 
 type UploadImageActionResult = {
   url: string;
@@ -13,7 +13,7 @@ export async function uploadImageAction(
 ): Promise<UploadImageActionResult> {
   const makeResult = ({ url = '', error = '' }) => ({ url, error });
 
-  const isAuthenticated = await verifyLoginSession();
+  const isAuthenticated = await getLoginSessionForApi();
 
   if (!isAuthenticated) {
     return makeResult({ error: 'Faça login novamente' });
@@ -31,7 +31,6 @@ export async function uploadImageAction(
 
   const uploadMaxSize =
     Number(process.env.NEXT_PUBLIC_IMAGE_UPLOAD_MAX_SIZE) || 921600;
-
   if (file.size > uploadMaxSize) {
     return makeResult({ error: 'Arquivo muito grande' });
   }
@@ -40,20 +39,19 @@ export async function uploadImageAction(
     return makeResult({ error: 'Imagem inválida' });
   }
 
-  const safeFileName = file.name.replaceAll(/[^a-zA-Z0-9._-]/g, '-');
-  const pathname = `uploads/${Date.now()}-${safeFileName}`;
+  const uploadResponse = await authenticatedApiRequest<{ url: string }>(
+    `/upload`,
+    {
+      method: 'POST',
+      body: formData,
+    },
+  );
 
-  try {
-    const blob = await put(pathname, file, {
-      access: 'public',
-      addRandomSuffix: true,
-    });
-
-    return makeResult({ url: blob.url });
-  } catch {
-    return makeResult({
-      error:
-        'Erro ao enviar imagem. Verifique se o Vercel Blob esta configurado.',
-    });
+  if (!uploadResponse.success) {
+    return makeResult({ error: uploadResponse.errors[0] });
   }
+
+  const url = `${process.env.IMAGE_SERVER_URL}${uploadResponse.data.url}`;
+
+  return makeResult({ url });
 }
