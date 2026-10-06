@@ -1,5 +1,6 @@
 'use client';
 
+import { deleteUserAction } from '@/actions/user/delete-user-action';
 import { updateUserAction } from '@/actions/user/update-user-action';
 import { Button } from '@/components/Button';
 import { Dialog } from '@/components/Dialog';
@@ -39,7 +40,18 @@ export function UpdateUserForm({ user }: UpdateUserFormProps) {
   }
 
   function handleDeleteUserAccount() {
-    //
+    startTransition(async () => {
+      if (!confirm('Confirme só mais uma vez que quer continuar')) return;
+
+      const result = await deleteUserAction();
+
+      if (result.errors) {
+        toast.dismiss();
+        result.errors.forEach(e => toast.error(e));
+      }
+
+      setIsDialogVisible(false);
+    });
   }
 
   useEffect(() => {
