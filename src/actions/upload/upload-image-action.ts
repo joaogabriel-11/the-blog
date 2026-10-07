@@ -1,7 +1,7 @@
 'use server';
 
+import { put } from '@vercel/blob';
 import { getLoginSessionForApi } from '@/lib/login/manage-login';
-import { authenticatedApiRequest } from '@/utils/authenticated-api-request';
 
 type UploadImageActionResult = {
   url: string;
@@ -39,19 +39,16 @@ export async function uploadImageAction(
     return makeResult({ error: 'Imagem inválida' });
   }
 
-  const uploadResponse = await authenticatedApiRequest<{ url: string }>(
-    `/upload`,
-    {
-      method: 'POST',
-      body: formData,
-    },
-  );
+  try {
+    const blob = await put(`posts/${file.name}`, file, {
+      access: 'public',
+      addRandomSuffix: true,
+      contentType: file.type,
+    });
 
-  if (!uploadResponse.success) {
-    return makeResult({ error: uploadResponse.errors[0] });
+    return makeResult({ url: blob.url });
+  } catch (error) {
+    console.error('Erro ao enviar imagem para o Vercel Blob:', error);
+    return makeResult({ error: 'Não foi possível enviar a imagem' });
   }
-
-  const url = `${process.env.IMAGE_SERVER_URL}${uploadResponse.data.url}`;
-
-  return makeResult({ url });
 }
